@@ -1,0 +1,48 @@
+---
+title: "Badminton 시각화"
+author: "jiseungRyu"
+date: '2017 11 9 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(needs)
+needs(tidyverse,plotly,ggmap,gridExtra)
+# install.packages("ggplot2")
+# devtools::install_github("dkahle/ggmap")
+
+```
+
+```{r}
+SL <- as.tibble(read.csv("~/Desktop/badminton/badminton_location.csv"))
+SL <- SL %>% subset(!is.na(경도))
+
+cen <- c(median(SL$경도),median(SL$위도)-0.5)
+p1<- ggmap(get_googlemap(center=cen, scale = 1,maptype = "roadmap",zoom=7), fullpage = TRUE) + geom_point(aes(x=경도,y=위도, colour = 시도명), data = SL, alpha = 0.7) + theme_bw(base_family = "AppleGothic")
+
+p1
+```
+```{r}
+city <- SL %>% group_by(시도명) %>% summarise(cnt=n(),lat=median(위도),lon=median(경도))
+
+cen <- c(median(city$lon),median(city$lat)-0.5)
+p2 <- ggmap(get_googlemap(center= cen, scale = 1,maptype = "roadmap",zoom=7), fullpage = TRUE) + 
+  geom_point(aes(x=lon,y=lat, size = cnt ,color = 시도명), data = city, alpha = 0.9) +
+  theme_bw(base_family = "AppleGothic") 
+p2
+```
+```{r}
+city <- SL %>% group_by(시도명) %>% summarise(cnt=n(),lat=median(위도),lon=median(경도))
+city$cnt_color <- as.factor(ifelse(city$cnt < 500 ,"0~500",
+                     ifelse(city$cnt < 1000 ,"500~1000","1000이상") ))
+
+cen <- c(median(city$lon),median(city$lat)-0.5)
+ggmap(get_googlemap(center= cen, scale = 1,maptype = "roadmap",zoom=7), fullpage = TRUE) + 
+  geom_point(aes(x=lon,y=lat, size = cnt ,color = cnt_color), data = city, alpha = 0.9) +
+  theme_bw(base_family = "AppleGothic") 
+```
+
